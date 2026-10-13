@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>빈티지 브랜딩 체험단 모집</title>
+<meta name="description" content="지금의 나를 만든 흔적을 발견하고 빈티지 키링으로 간직하세요">
+<style>
+@font-face{
+  font-family:'Pretendard';
+  src:url('assets/fonts/PretendardVariable.woff2') format('woff2-variations');
+  font-weight:45 920;
+}
+:root{
+  --key: rgb(15,10,9);
+  --bg: rgb(255,255,255);
+  --muted: rgba(15,10,9,0.45);
+  --line: rgba(15,10,9,0.12);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased}
+html,body{height:100%}
+body{
+  font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  background:var(--bg);
+  color:var(--key);
+  overflow:hidden;
+}
+#app{position:fixed;inset:0;display:flex;flex-direction:column;background:var(--bg)}
+
+/* progress bar */
+#progress{position:fixed;top:0;left:0;right:0;height:4px;background:var(--line);z-index:50}
+#progress-fill{height:100%;width:0%;background:var(--key);transition:width .35s ease}
+
+/* back button */
+#back-btn{
+  position:fixed;top:20px;left:16px;z-index:60;
+  width:40px;height:40px;border:none;background:transparent;
+  font-size:22px;color:var(--key);cursor:pointer;display:none;
+  align-items:center;justify-content:center;
+}
+#back-btn.show{display:flex}
+
+.screen{
+  position:absolute;inset:0;display:none;flex-direction:column;
+  align-items:center;justify-content:flex-start;
+  padding:80px 24px 40px;
+  overflow-y:auto;
+  animation:fadeIn .4s ease;
+}
+.screen.active{display:flex}
+/* auto margins center the content when it fits, but collapse (top-align + scroll) when it overflows — avoids the top-cutoff bug of justify-content:center */
+.screen.v-center .inner{margin-top:auto;margin-bottom:auto}
+@keyframes fadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+.inner{width:100%;max-width:480px;text-align:center}
+
+/* start page */
+#screen-start .logo{width:56px;height:56px;object-fit:contain;border-radius:12px;margin-bottom:20px}
+#screen-start .hero-img{width:100%;border-radius:16px;margin-bottom:28px;object-fit:cover;max-height:320px}
+#screen-start h1{font-size:22px;font-weight:700;margin-bottom:10px;line-height:1.4}
+#screen-start .desc{font-size:15px;color:var(--muted);line-height:1.6;margin-bottom:36px}
+.btn-primary{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  background:var(--key);color:var(--bg);border:none;
+  padding:16px 32px;border-radius:999px;font-size:16px;font-weight:600;
+  cursor:pointer;width:100%;max-width:320px;transition:opacity .15s;
+}
+.btn-primary:disabled{opacity:.35;cursor:not-allowed}
+.btn-primary:not(:disabled):active{opacity:.75}
+.btn-secondary{
+  display:inline-flex;align-items:center;justify-content:center;
+  background:transparent;color:var(--key);border:1.5px solid var(--line);
+  padding:15px 32px;border-radius:999px;font-size:15px;font-weight:600;
+  cursor:pointer;width:100%;max-width:320px;margin-top:10px;
+}
+
+/* question text */
+.q-num{font-size:13px;color:var(--muted);font-weight:600;margin-bottom:14px;letter-spacing:.02em}
+.q-text{font-size:20px;font-weight:700;line-height:1.5;margin-bottom:28px}
+.q-text div{margin:0}
+
+/* intro long text */
+.long-text{font-size:16px;line-height:1.85;text-align:center;margin-bottom:36px}
+.long-text div{margin:0}
+
+/* short text input */
+.input-short{
+  width:100%;border:none;border-bottom:2px solid var(--line);
+  background:transparent;font-size:19px;padding:12px 4px;
+  text-align:center;color:var(--key);outline:none;font-family:inherit;
+  margin-bottom:32px;transition:border-color .2s;
+}
+.input-short:focus{border-color:var(--key)}
+.hint{font-size:13px;color:var(--muted);margin-top:-22px;margin-bottom:24px}
+
+/* choices */
+.choices{width:100%;display:flex;flex-direction:column;gap:10px;margin-bottom:28px}
+.choice-btn{
+  width:100%;text-align:left;padding:16px 20px;border-radius:14px;
+  border:1.5px solid var(--line);background:transparent;color:var(--key);
+  font-size:16px;font-family:inherit;cursor:pointer;transition:.15s;
+}
+.choice-btn:hover{border-color:var(--key)}
+.choice-btn.selected{background:var(--key);color:var(--bg);border-color:var(--key)}
+.choice-other-input{
+  width:100%;border:1.5px solid var(--line);border-radius:14px;
+  padding:15px 20px;font-size:16px;font-family:inherit;margin-top:2px;outline:none;
+}
+.choice-other-input:focus{border-color:var(--key)}
+.limit-hint{font-size:13px;color:var(--muted);margin-bottom:16px}
+
+/* grouped fields (multiple inputs on one screen) */
+.group-fields{width:100%;display:flex;flex-direction:column;gap:24px;margin-bottom:28px;text-align:left}
+.group-field-label{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px}
+.group-input{margin-bottom:0;text-align:left}
+.group-choice-row{display:flex;gap:8px}
+.group-choice-btn{
+  flex:1;padding:13px 0;border-radius:12px;
+  border:1.5px solid var(--line);background:transparent;color:var(--key);
+  font-size:15px;font-family:inherit;cursor:pointer;transition:.15s;
+}
+.group-choice-btn.selected{background:var(--key);color:var(--bg);border-color:var(--key)}
+
+/* legal */
+.legal-box{
+  width:100%;max-height:38vh;overflow-y:auto;text-align:left;
+  border:1.5px solid var(--line);border-radius:14px;padding:20px;
+  font-size:13px;line-height:1.7;margin-bottom:24px;color:var(--key);
+}
+.legal-box p{margin:0 0 2px}
+.legal-msg{font-size:13px;color:#c0392b;margin-bottom:12px;display:none}
+.legal-msg.show{display:block}
+
+/* question sub text (smaller muted line under the main question) */
+.q-sub{font-size:13.5px;color:var(--muted);line-height:1.55;margin-top:-18px;margin-bottom:28px}
+.q-sub div{margin:0}
+
+/* birth-year dropdown (styled native select, matches input look) */
+.group-select{
+  -webkit-appearance:none;appearance:none;cursor:pointer;color:var(--key);
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%230f0a09' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6 6 6-6'/></svg>");
+  background-repeat:no-repeat;background-position:right 2px center;background-size:16px;padding-right:26px;
+}
+.group-select.placeholder{color:var(--muted)}
+
+/* phone note (small reassurance line under the contact input) */
+.field-note{font-size:12.5px;color:var(--muted);line-height:1.5;margin-top:-18px;margin-bottom:24px;text-align:center;word-break:keep-all}
+
+/* consent (checkbox + policy link, on the contact page) */
+.consent-row{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:22px;font-size:13.5px;color:var(--key)}
+.consent-box{flex:none;width:20px;height:20px;border-radius:5px;border:1.5px solid var(--line);background:transparent;display:grid;place-items:center;cursor:pointer;padding:0}
+.consent-box svg{width:12px;height:12px;color:var(--bg);opacity:0}
+.consent-box.on{background:var(--key);border-color:var(--key)}
+.consent-box.on svg{opacity:1}
+.consent-row label{cursor:pointer;line-height:1.4;word-break:keep-all;text-align:left}
+.policy-link{font-weight:700;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+
+/* policy modal */
+.modal{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;padding:22px;background:rgba(0,0,0,.5)}
+.modal.show{display:flex}
+.modal-card{width:100%;max-width:400px;max-height:80vh;display:flex;flex-direction:column;background:var(--bg);color:var(--key);border-radius:14px;overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.35)}
+.modal-card h3{font-size:16px;font-weight:800;padding:20px 20px 12px;flex:none}
+.modal-body{padding:0 20px 4px;overflow-y:auto;font-size:13px;line-height:1.75;white-space:pre-wrap;color:var(--key);-webkit-overflow-scrolling:touch}
+.modal-close{flex:none;margin:14px 20px 18px;min-height:46px;border:0;border-radius:9px;background:var(--key);color:var(--bg);font-size:15px;font-weight:600;cursor:pointer}
+
+/* loading */
+.loader{width:44px;height:44px;position:relative;margin-bottom:20px}
+.loader::after{content:'';position:absolute;inset:0;margin:auto;width:16px;height:16px;
+  border-radius:50%;background:var(--key);animation:pulse 1.4s ease infinite}
+@keyframes pulse{0%,100%{transform:scale(0);opacity:0}50%{transform:scale(1);opacity:1}}
+#loading-text{font-size:15px;color:var(--muted);font-weight:600}
+
+/* result */
+#screen-result .hero-img{width:160px;height:160px;object-fit:cover;border-radius:16px;margin-bottom:24px}
+#screen-result h2{font-size:22px;font-weight:700;margin-bottom:20px}
+.result-contents{font-size:15px;line-height:1.9;color:var(--muted)}
+.result-contents p{margin:0}
+.restart-link{margin-top:32px;font-size:14px;color:var(--muted);text-decoration:underline;cursor:pointer;background:none;border:none;font-family:inherit}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="progress"><div id="progress-fill"></div></div>
+  <button id="back-btn" aria-label="이전">‹</button>
+
+  <div class="screen active" id="screen-start">
+    <div class="inner">
+      <img class="logo" id="start-logo" alt="logo">
+      <img class="hero-img" id="start-hero" alt="">
+      <h1 id="start-title"></h1>
+      <div class="desc" id="start-desc"></div>
+      <button class="btn-primary" id="start-btn"></button>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-question">
+    <div class="inner" id="question-content"></div>
+  </div>
+
+  <div class="screen" id="screen-loading">
+    <div class="inner">
+      <div class="loader"></div>
+      <div id="loading-text"></div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-result">
+    <div class="inner">
+      <img class="hero-img" id="result-img" alt="">
+      <h2 id="result-title"></h2>
+      <div class="result-contents" id="result-contents"></div>
+      <button class="restart-link" id="restart-btn">다시 시작하기</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="policy-modal">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-label="개인정보 수집 및 이용 동의">
+    <h3>개인정보 수집 및 이용 동의</h3>
+    <div class="modal-body" id="policy-body"></div>
+    <button class="modal-close" type="button" id="policy-close">확인</button>
+  </div>
+</div>
+
+<script>
+const FORM = {"font": "Pretendard", "colors": {"key": "rgb(15,10,9)", "background": "rgb(255,255,255)"}, "startPage": {"image": "assets/start-hero.png", "buttonText": "체험 신청하기", "title": "빈티지 키링 무료 증정 이벤트", "description": "지금의 나를 만든 흔적을 발견하고<div>빈티지 키링으로 간직하세요</div>", "logo": "assets/logo.png"}, "steps": [{"key": "wjHb6j1h", "type": "intro", "longText": "<div>체험자의 이야기를 통해 고유한 흔적을 함께 발견한 뒤,</div><div>그 의미가 담긴 빈티지 키링을 증정합니다.</div><div><br></div><div><span style=\"font-size: 19px; font-weight: 600;\">• 빈티지 키링 증정 체험 안내</span></div><div>1회차 : 나의 흔적 찾기</div><div>2회차 : 빈티지 키링 증정&nbsp;</div><div><br></div><div><span style=\"font-size: 19px; font-weight: 600;\">• 모집 대상</span></div><div>서울·경기 거주 98~07년생 (성별 무관)</div><div><br></div><div><span style=\"font-weight: bold;\">선착순 30명</span></div>", "nextBtn": "신청하기"}, {"key": "9dr6owo7", "type": "single", "q": "당신이 다시 떠올리고 싶은 순간은 언제인가요?", "choices": [{"key": "1", "text": "어린 시절"}, {"key": "2", "text": "학창 시절"}, {"key": "T0JJFDD2", "text": "여행"}, {"key": "0mCufP4c", "text": "가족·친구와의 추억"}, {"key": "GicpUJ6G", "text": "새로운 시작(입학·취업·자취 등)"}, {"key": "nGmPo40L", "text": "특별한 도전이나 성취"}], "allowOther": true, "nextBtn": "다음 질문"}, {"key": "QFXWCe9g", "type": "single", "q": "그 기억 속의 내 기분을 골라주세요", "choices": [{"key": "1", "text": "설렘"}, {"key": "2", "text": "행복"}, {"key": "X4ECnJTY", "text": "그리움"}, {"key": "U0oFfXo5", "text": "자유"}, {"key": "sadness01", "text": "슬픔"}], "allowOther": true, "nextBtn": "다음 질문"}, {"key": "personal-info", "type": "group", "q": "신청자 분의 성함·나이를 알려주세요", "nextBtn": "다음 질문", "fields": [{"key": "VnDDsYU8", "type": "text", "label": "성함", "placeholder": "이름", "minLen": null}, {"key": "qlnD1jKv", "type": "year", "label": "출생연도", "placeholder": "출생연도 선택", "from": 2007, "to": 1998}, {"key": "zWMNTqY7", "type": "choice", "label": "성별", "choices": [{"key": "6BK0BQtL", "text": "남"}, {"key": "0cZl2Fe6", "text": "여"}]}], "sub": "(본 이벤트는 20대 대상으로 진행됩니다)"}, {"key": "UKeDscc1", "type": "short", "q": "실거주지에서 가장 가까운 역을 알려주세요 :)", "placeholder": "ex) 당산역", "minLen": null, "nextBtn": "다음 질문", "sub": "*적어주신 역에 따라 체험장소 안내해드립니다", "col": "가까운 역"}, {"key": "contact", "type": "contact", "q": "안내드릴 연락처를 남겨주세요 :)", "sub": "*유선으로 안내드리고 있습니다", "col": "연락처", "placeholder": "010-0000-0000", "note": "🔒 예약 안내용으로만 · 스팸 0건 · 24시간 뒤 삭제", "consent": true, "nextBtn": "제출하기"}], "loadingPage": {"text": "제출 중", "delay": 4000, "completeText": "완료", "skipLoadingPage": false}, "resultPage": {"title": "신청 완료", "image": "assets/result.png", "contents": "<p style=\"text-align:center; line-height:1;\" data-we-empty-p=\"\">신청이 완료되었습니다.</p><p><br></p><p style=\"text-align:center;\" data-we-empty-p=\"\">자세한 이벤트 안내와 예약은&nbsp;</p><p style=\"text-align:center;\" data-we-empty-p=\"\">확인 후 최대한 빠르게 유선으로</p><p style=\"text-align:center;\" data-we-empty-p=\"\">&nbsp;안내드리겠습니다.&nbsp;</p><p style=\"text-align:center;\" data-we-empty-p=\"\">감사합니다.</p>"}, "allowBack": true};
+
+// ---- Google Sheets integration ---------------------------------------------
+// Paste the Web App URL from the deployed Apps Script (see AppsScript/Code.gs).
+const SUBMIT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzHnwXFiIVQ4X9-SxNuy-kNvNGRLQL7onC595keEuIjeScpjOFeds1VC97UJSPREqiU/exec';
+
+// One id per browser tab session, used to line up step-view logs into a funnel.
+function generateId() {
+  if (crypto.randomUUID) return crypto.randomUUID();
+  return 'xxxxxxxxxxxx4xxxyxxxxxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+let SESSION_ID = sessionStorage.getItem('form_session_id') || generateId();
+sessionStorage.setItem('form_session_id', SESSION_ID);
+
+function logStepView(stepOrdinal, stepKey, stepLabel) {
+  if (!SUBMIT_ENDPOINT || SUBMIT_ENDPOINT.includes('XXXX')) return;
+  const payload = JSON.stringify({
+    logType: 'step_view',
+    sessionId: SESSION_ID,
+    stepIndex: stepOrdinal,
+    stepKey: stepKey,
+    stepLabel: stepLabel,
+  });
+  // sendBeacon survives page navigation/unload, which is when most drop-off happens.
+  if (navigator.sendBeacon) {
+    navigator.sendBeacon(SUBMIT_ENDPOINT, new Blob([payload], { type: 'text/plain;charset=UTF-8' }));
+  } else {
+    fetch(SUBMIT_ENDPOINT, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: payload }).catch(() => {});
+  }
+}
+
+function stripHtml(html) {
+  return (html || '').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function labelForStep(step) {
+  if (step.col) return step.col;
+  if (step.type === 'legal') return '개인정보동의';
+  if (step.type === 'intro') return '안내 화면';
+  if (step.type === 'contact') return '연락처';
+  return stripHtml(step.q) || step.key;
+}
+
+function answerToText(step, value) {
+  if (value == null) return '';
+  if (step.type === 'legal') return value ? '동의함' : '';
+  if (step.type === 'year') return value ? (String(value).slice(2).padStart(2, '0') + '년생') : '';
+  if (step.type === 'short' || step.type === 'text' || step.type === 'contact') return value;
+  if (step.type === 'single' || step.type === 'choice') return value.text || '';
+  if (step.type === 'multi') return (value || []).map(v => v.text).join(', ');
+  return String(value);
+}
+
+function flattenAnswers(answers) {
+  const flat = {};
+  steps.forEach(step => {
+    if (step.type === 'intro') return;
+    if (step.type === 'group') {
+      step.fields.forEach(field => {
+        flat[field.label] = answerToText(field, answers[field.key]);
+      });
+      return;
+    }
+    flat[labelForStep(step)] = answerToText(step, answers[step.key]);
+    if (step.type === 'contact' && step.consent) {
+      flat['개인정보동의'] = answers['__consent__'] ? '동의함' : '';
+    }
+  });
+  return flat;
+}
+
+async function submitAnswers(answers) {
+  const flat = flattenAnswers(answers);
+  try {
+    localStorage.setItem('form_submission_' + Date.now(), JSON.stringify(flat));
+  } catch (e) {}
+  console.log('Form submission', flat);
+
+  if (!SUBMIT_ENDPOINT || SUBMIT_ENDPOINT.includes('XXXX')) return;
+  try {
+    // Apps Script web apps don't handle CORS preflight, so this is sent as a
+    // simple request (text/plain body, no-cors) — the response can't be read,
+    // so success is assumed and errors only surface as network failures.
+    await fetch(SUBMIT_ENDPOINT, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ logType: 'submit', sessionId: SESSION_ID, answers: flat }),
+    });
+  } catch (err) {
+    console.error('Google Sheets submit failed', err);
+  }
+}
+// ----------------------------------------------------------------------------
+
+const steps = FORM.steps;
+const answers = {};
+let stepIndex = -1; // -1 = start page
+
+const $ = (sel) => document.querySelector(sel);
+const screens = {
+  start: $('#screen-start'),
+  question: $('#screen-question'),
+  loading: $('#screen-loading'),
+  result: $('#screen-result'),
+};
+const progressFill = $('#progress-fill');
+const backBtn = $('#back-btn');
+const questionContent = $('#question-content');
+
+function showScreen(name) {
+  Object.values(screens).forEach(s => s.classList.remove('active'));
+  screens[name].classList.add('active');
+}
+
+function updateProgress() {
+  if (stepIndex < 0) { progressFill.style.width = '0%'; return; }
+  const pct = ((stepIndex + 1) / steps.length) * 100;
+  progressFill.style.width = pct + '%';
+}
+
+function updateBackBtn() {
+  backBtn.classList.toggle('show', FORM.allowBack && stepIndex > 0);
+}
+
+// ---- start page -------------------------------------------------------
+function initStart() {
+  document.title = FORM.startPage.title || document.title;
+  $('#start-logo').src = FORM.startPage.logo;
+  if (FORM.startPage.image) {
+    $('#start-hero').src = FORM.startPage.image;
+  } else {
+    $('#start-hero').style.display = 'none';
+  }
+  $('#start-title').textContent = FORM.startPage.title;
+  $('#start-desc').innerHTML = FORM.startPage.description;
+  $('#start-btn').textContent = FORM.startPage.buttonText;
+  $('#start-btn').addEventListener('click', () => goToStep(0));
+  logStepView(0, '__start__', '시작화면');
+}
+
+function goToStep(idx) {
+  if (idx >= steps.length) { return finish(); }
+  stepIndex = idx;
+  renderStep(steps[idx]);
+  showScreen('question');
+  updateProgress();
+  updateBackBtn();
+  logStepView(idx + 1, steps[idx].key, labelForStep(steps[idx]));
+}
+
+function goBack() {
+  if (stepIndex <= 0) return;
+  goToStep(stepIndex - 1);
+}
+backBtn.addEventListener('click', goBack);
+
+function renderStep(step) {
+  questionContent.innerHTML = '';
+  screens.question.scrollTop = 0;
+  screens.question.classList.toggle('v-center', step.type === 'intro' || step.type === 'legal');
+  if (step.type === 'intro') renderIntro(step);
+  else if (step.type === 'legal') renderLegal(step);
+  else if (step.type === 'short') renderShort(step);
+  else if (step.type === 'single') renderSingle(step);
+  else if (step.type === 'multi') renderMulti(step);
+  else if (step.type === 'group') renderGroup(step);
+  else if (step.type === 'contact') renderContact(step);
+}
+
+function makeNextBtn(label, onClick) {
+  const btn = document.createElement('button');
+  btn.className = 'btn-primary';
+  btn.textContent = label;
+  btn.addEventListener('click', onClick);
+  return btn;
+}
+
+function advance() { goToStep(stepIndex + 1); }
+
+// ---- intro --------------------------------------------------------------
+function renderIntro(step) {
+  const longText = document.createElement('div');
+  longText.className = 'long-text';
+  longText.innerHTML = step.longText;
+  questionContent.appendChild(longText);
+  questionContent.appendChild(makeNextBtn(step.nextBtn, advance));
+}
+
+// ---- legal ---------------------------------------------------------------
+function renderLegal(step) {
+  const box = document.createElement('div');
+  box.className = 'legal-box';
+  box.innerHTML = step.legalHtml;
+  questionContent.appendChild(box);
+
+  const msg = document.createElement('div');
+  msg.className = 'legal-msg';
+  msg.textContent = '계속 진행하려면 동의가 필요합니다.';
+  questionContent.appendChild(msg);
+
+  const agree = makeNextBtn(step.agreeButton, () => {
+    answers[step.key] = true;
+    advance();
+  });
+  questionContent.appendChild(agree);
+
+  const disagree = document.createElement('button');
+  disagree.className = 'btn-secondary';
+  disagree.textContent = step.disagreeButton;
+  disagree.addEventListener('click', () => msg.classList.add('show'));
+  questionContent.appendChild(disagree);
+}
+
+// ---- short text -----------------------------------------------------------
+function renderShort(step) {
+  const q = document.createElement('div');
+  q.className = 'q-text';
+  q.innerHTML = step.q;
+  questionContent.appendChild(q);
+
+  if (step.sub) {
+    const sub = document.createElement('div');
+    sub.className = 'q-sub';
+    sub.innerHTML = step.sub;
+    questionContent.appendChild(sub);
+  }
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'input-short';
+  input.placeholder = step.placeholder || '';
+  input.value = answers[step.key] || '';
+  questionContent.appendChild(input);
+
+  const btn = makeNextBtn(step.nextBtn, () => {
+    answers[step.key] = input.value.trim();
+    advance();
+  });
+  btn.disabled = !isShortValid(step, input.value);
+  questionContent.appendChild(btn);
+
+  input.addEventListener('input', () => {
+    btn.disabled = !isShortValid(step, input.value);
+  });
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !btn.disabled) btn.click();
+  });
+  setTimeout(() => input.focus(), 50);
+}
+
+function isShortValid(step, value) {
+  const v = value.trim();
+  if (!v) return false;
+  if (step.minLen && v.length < step.minLen) return false;
+  return true;
+}
+
+// ---- single choice ----------------------------------------------------
+function renderSingle(step) {
+  const q = document.createElement('div');
+  q.className = 'q-text';
+  q.innerHTML = step.q;
+  questionContent.appendChild(q);
+
+  const wrap = document.createElement('div');
+  wrap.className = 'choices';
+
+  let selectedKey = null;
+  let otherInput = null;
+
+  const existing = answers[step.key];
+  if (existing) selectedKey = existing.key;
+
+  step.choices.forEach(choice => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = choice.text;
+    if (choice.key === selectedKey) btn.classList.add('selected');
+    btn.addEventListener('click', () => {
+      selectedKey = choice.key;
+      wrap.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      if (otherInput) otherInput.value = '';
+      refreshNext();
+    });
+    wrap.appendChild(btn);
+  });
+
+  if (step.allowOther) {
+    const otherBtn = document.createElement('button');
+    otherBtn.className = 'choice-btn';
+    otherBtn.textContent = '기타 (직접 입력)';
+    const otherWrap = document.createElement('div');
+    otherWrap.style.display = 'none';
+    otherInput = document.createElement('input');
+    otherInput.className = 'choice-other-input';
+    otherInput.placeholder = '답변을 입력해주세요';
+    otherWrap.appendChild(otherInput);
+
+    otherBtn.addEventListener('click', () => {
+      selectedKey = '__other__';
+      wrap.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('selected'));
+      otherBtn.classList.add('selected');
+      otherWrap.style.display = 'block';
+      otherInput.focus();
+      refreshNext();
+    });
+    wrap.appendChild(otherBtn);
+    wrap.appendChild(otherWrap);
+    otherInput.addEventListener('input', refreshNext);
+  }
+
+  questionContent.appendChild(wrap);
+
+  const btn = makeNextBtn(step.nextBtn, () => {
+    if (selectedKey === '__other__') {
+      answers[step.key] = { key: '__other__', text: otherInput.value.trim() };
+    } else {
+      const c = step.choices.find(c => c.key === selectedKey);
+      answers[step.key] = c ? { key: c.key, text: c.text } : null;
+    }
+    advance();
+  });
+  questionContent.appendChild(btn);
+
+  function refreshNext() {
+    let valid = false;
+    if (selectedKey === '__other__') valid = otherInput.value.trim().length > 0;
+    else valid = !!selectedKey;
+    btn.disabled = !valid;
+  }
+  refreshNext();
+}
+
+// ---- multiple choice --------------------------------------------------
+function renderMulti(step) {
+  const q = document.createElement('div');
+  q.className = 'q-text';
+  q.innerHTML = step.q;
+  questionContent.appendChild(q);
+
+  if (step.min || step.max) {
+    const hint = document.createElement('div');
+    hint.className = 'limit-hint';
+    if (step.min && step.max) hint.textContent = `${step.min}~${step.max}개 선택해주세요.`;
+    else if (step.max) hint.textContent = `최대 ${step.max}개까지 선택 가능합니다.`;
+    else if (step.min) hint.textContent = `최소 ${step.min}개 이상 선택해주세요.`;
+    questionContent.appendChild(hint);
+  }
+
+  const wrap = document.createElement('div');
+  wrap.className = 'choices';
+  const selected = new Set((answers[step.key] || []).filter(a => a.key !== '__other__').map(a => a.key));
+  let otherActive = (answers[step.key] || []).some(a => a.key === '__other__');
+  let otherInput = null;
+
+  function atMax() { return step.max && selected.size >= step.max; }
+
+  step.choices.forEach(choice => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = choice.text;
+    if (selected.has(choice.key)) btn.classList.add('selected');
+    btn.addEventListener('click', () => {
+      if (selected.has(choice.key)) {
+        selected.delete(choice.key);
+        btn.classList.remove('selected');
+      } else {
+        if (atMax()) return;
+        selected.add(choice.key);
+        btn.classList.add('selected');
+      }
+      refreshNext();
+    });
+    wrap.appendChild(btn);
+  });
+
+  if (step.allowOther) {
+    const otherBtn = document.createElement('button');
+    otherBtn.className = 'choice-btn';
+    otherBtn.textContent = '기타 (직접 입력)';
+    if (otherActive) otherBtn.classList.add('selected');
+    const otherWrap = document.createElement('div');
+    otherWrap.style.display = otherActive ? 'block' : 'none';
+    otherInput = document.createElement('input');
+    otherInput.className = 'choice-other-input';
+    otherInput.placeholder = '답변을 입력해주세요';
+    otherWrap.appendChild(otherInput);
+
+    otherBtn.addEventListener('click', () => {
+      if (otherActive) {
+        otherActive = false;
+        otherBtn.classList.remove('selected');
+        otherWrap.style.display = 'none';
+      } else {
+        if (atMax()) return;
+        otherActive = true;
+        otherBtn.classList.add('selected');
+        otherWrap.style.display = 'block';
+        otherInput.focus();
+      }
+      refreshNext();
+    });
+    wrap.appendChild(otherBtn);
+    wrap.appendChild(otherWrap);
+    otherInput.addEventListener('input', refreshNext);
+  }
+
+  questionContent.appendChild(wrap);
+
+  const btn = makeNextBtn(step.nextBtn, () => {
+    const result = step.choices.filter(c => selected.has(c.key)).map(c => ({ key: c.key, text: c.text }));
+    if (otherActive && otherInput.value.trim()) {
+      result.push({ key: '__other__', text: otherInput.value.trim() });
+    }
+    answers[step.key] = result;
+    advance();
+  });
+  questionContent.appendChild(btn);
+
+  function refreshNext() {
+    const count = selected.size + (otherActive && otherInput.value.trim() ? 1 : 0);
+    const min = step.min || 0;
+    btn.disabled = count < Math.max(min, 1);
+  }
+  refreshNext();
+}
+
+// ---- grouped fields (several inputs on one screen) --------------------
+function renderGroup(step) {
+  if (step.q) {
+    const q = document.createElement('div');
+    q.className = 'q-text';
+    q.innerHTML = step.q;
+    questionContent.appendChild(q);
+  }
+
+  if (step.sub) {
+    const sub = document.createElement('div');
+    sub.className = 'q-sub';
+    sub.innerHTML = step.sub;
+    questionContent.appendChild(sub);
+  }
+
+  const fieldsWrap = document.createElement('div');
+  fieldsWrap.className = 'group-fields';
+  const fieldState = {};
+
+  function refreshNext() {
+    btn.disabled = !step.fields.every(f => fieldState[f.key].isValid());
+  }
+
+  step.fields.forEach(field => {
+    const fieldWrap = document.createElement('div');
+
+    const label = document.createElement('div');
+    label.className = 'group-field-label';
+    label.textContent = field.label;
+    fieldWrap.appendChild(label);
+
+    if (field.type === 'choice') {
+      const choiceWrap = document.createElement('div');
+      choiceWrap.className = 'group-choice-row';
+      let selectedKey = answers[field.key] ? answers[field.key].key : null;
+
+      field.choices.forEach(choice => {
+        const cbtn = document.createElement('button');
+        cbtn.type = 'button';
+        cbtn.className = 'group-choice-btn';
+        cbtn.textContent = choice.text;
+        if (choice.key === selectedKey) cbtn.classList.add('selected');
+        cbtn.addEventListener('click', () => {
+          selectedKey = choice.key;
+          choiceWrap.querySelectorAll('.group-choice-btn').forEach(b => b.classList.remove('selected'));
+          cbtn.classList.add('selected');
+          refreshNext();
+        });
+        choiceWrap.appendChild(cbtn);
+      });
+      fieldWrap.appendChild(choiceWrap);
+
+      fieldState[field.key] = {
+        isValid: () => !!selectedKey,
+        commit: () => {
+          const c = field.choices.find(c => c.key === selectedKey);
+          answers[field.key] = c ? { key: c.key, text: c.text } : null;
+        },
+      };
+    } else if (field.type === 'year') {
+      const select = document.createElement('select');
+      select.className = 'input-short group-input group-select';
+      const phOpt = document.createElement('option');
+      phOpt.value = '';
+      phOpt.textContent = field.placeholder || '출생연도 선택';
+      phOpt.disabled = true;
+      phOpt.selected = !answers[field.key];
+      select.appendChild(phOpt);
+      for (let y = field.from; y >= field.to; y--) {
+        const opt = document.createElement('option');
+        opt.value = String(y);
+        opt.textContent = String(y).slice(2).padStart(2, '0') + '년생';
+        if (String(answers[field.key]) === String(y)) opt.selected = true;
+        select.appendChild(opt);
+      }
+      select.classList.toggle('placeholder', !answers[field.key]);
+      fieldWrap.appendChild(select);
+      select.addEventListener('change', () => {
+        select.classList.toggle('placeholder', !select.value);
+        refreshNext();
+      });
+      fieldState[field.key] = {
+        isValid: () => !!select.value,
+        commit: () => { answers[field.key] = select.value; },
+      };
+    } else {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'input-short group-input';
+      input.placeholder = field.placeholder || '';
+      input.value = answers[field.key] || '';
+      fieldWrap.appendChild(input);
+      input.addEventListener('input', refreshNext);
+
+      fieldState[field.key] = {
+        isValid: () => {
+          const v = input.value.trim();
+          if (!v) return false;
+          if (field.minLen && v.length < field.minLen) return false;
+          return true;
+        },
+        commit: () => { answers[field.key] = input.value.trim(); },
+      };
+    }
+
+    fieldsWrap.appendChild(fieldWrap);
+  });
+
+  questionContent.appendChild(fieldsWrap);
+
+  const btn = makeNextBtn(step.nextBtn, () => {
+    step.fields.forEach(f => fieldState[f.key].commit());
+    advance();
+  });
+  questionContent.appendChild(btn);
+  refreshNext();
+}
+
+// ---- contact (phone + consent, final step) ----------------------------
+// 010-XXXX-XXXX 자동 하이픈
+function fmtPhone(v, del) {
+  const d = v.replace(/\D/g, '').slice(0, 11);
+  let r = d.slice(0, 3);
+  if (d.length > 3) r += '-' + d.slice(3, 7);
+  if (d.length > 7) r += '-' + d.slice(7, 11);
+  if (!del) { // 입력 중일 때만 그룹이 꽉 차면 다음 '-'를 미리 표시
+    if (d.length === 3) r += '-';
+    else if (d.length === 7) r += '-';
+  }
+  return r;
+}
+
+function renderContact(step) {
+  const q = document.createElement('div');
+  q.className = 'q-text';
+  q.innerHTML = step.q;
+  questionContent.appendChild(q);
+
+  if (step.sub) {
+    const sub = document.createElement('div');
+    sub.className = 'q-sub';
+    sub.innerHTML = step.sub;
+    questionContent.appendChild(sub);
+  }
+
+  const input = document.createElement('input');
+  input.type = 'tel';
+  input.inputMode = 'numeric';
+  input.autocomplete = 'tel';
+  input.className = 'input-short';
+  input.placeholder = step.placeholder || '';
+  input.value = answers[step.key] || '';
+  questionContent.appendChild(input);
+
+  if (step.note) {
+    const note = document.createElement('div');
+    note.className = 'field-note';
+    note.textContent = step.note;
+    questionContent.appendChild(note);
+  }
+
+  // 개인정보 동의 (체크박스 + 처리방침 팝업)
+  let consent = !!answers['__consent__'];
+  const row = document.createElement('div');
+  row.className = 'consent-row';
+  const box = document.createElement('button');
+  box.type = 'button';
+  box.className = 'consent-box' + (consent ? ' on' : '');
+  box.setAttribute('aria-label', '개인정보 수집·이용 동의');
+  box.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  const label = document.createElement('label');
+  label.innerHTML = '<span class="policy-link">개인정보처리방침</span>을 확인하였으며 이에 동의합니다.';
+  row.appendChild(box);
+  row.appendChild(label);
+  questionContent.appendChild(row);
+
+  box.addEventListener('click', () => {
+    consent = !consent;
+    answers['__consent__'] = consent;
+    box.classList.toggle('on', consent);
+    refreshNext();
+  });
+  label.querySelector('.policy-link').addEventListener('click', openPolicy);
+
+  const btn = makeNextBtn(step.nextBtn, () => {
+    answers[step.key] = input.value.trim();
+    answers['__consent__'] = consent;
+    advance();
+  });
+  questionContent.appendChild(btn);
+
+  input.addEventListener('input', (e) => {
+    const del = e.inputType && e.inputType.indexOf('delete') === 0;
+    input.value = fmtPhone(input.value, del);
+    refreshNext();
+  });
+  input.addEventListener('focus', () => {
+    if (!input.value) input.value = '010-';
+  });
+  input.addEventListener('blur', () => {
+    if (input.value.replace(/\D/g, '').length <= 3) input.value = '';
+    refreshNext();
+  });
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !btn.disabled) btn.click();
+  });
+
+  function refreshNext() {
+    const digits = input.value.replace(/\D/g, '').length;
+    btn.disabled = !(digits >= 10 && consent);
+  }
+  refreshNext();
+}
+
+// ---- policy modal -----------------------------------------------------
+const POLICY = `NUA는 빈티지 키링 증정 체험단 이벤트 진행을 위하여 아래와 같이 개인정보를 수집·이용합니다.
+
+1. 수집·이용 목적
+• 이벤트 참가 접수 및 본인 확인
+• 흔적 찾기 체험 진행 및 결과 안내
+• 빈티지 키링 증정 관련 안내 연락
+
+2. 수집하는 개인정보 항목
+이름, 출생연도, 성별, 전화번호, 가까운 역
+
+3. 보유 및 이용 기간
+이벤트 종료 및 경품 발송 완료 후 3개월 이내 파기`;
+
+function openPolicy() {
+  $('#policy-body').textContent = POLICY;
+  $('#policy-modal').classList.add('show');
+}
+function closePolicy() { $('#policy-modal').classList.remove('show'); }
+$('#policy-close').addEventListener('click', closePolicy);
+$('#policy-modal').addEventListener('click', (e) => { if (e.target.id === 'policy-modal') closePolicy(); });
+
+// ---- loading + result --------------------------------------------------
+function finish() {
+  showScreen('loading');
+  $('#loading-text').textContent = FORM.loadingPage.text;
+  updateProgress();
+  backBtn.classList.remove('show');
+
+  submitAnswers(answers);
+  logStepView(steps.length + 1, '__complete__', '완료');
+
+  setTimeout(() => {
+    showResult();
+  }, FORM.loadingPage.delay || 0);
+}
+
+function showResult() {
+  const rp = FORM.resultPage;
+  if (rp.image) $('#result-img').src = rp.image; else $('#result-img').style.display = 'none';
+  $('#result-title').textContent = rp.title;
+  $('#result-contents').innerHTML = rp.contents;
+  showScreen('result');
+}
+
+$('#restart-btn').addEventListener('click', () => {
+  Object.keys(answers).forEach(k => delete answers[k]);
+  stepIndex = -1;
+  SESSION_ID = generateId();
+  sessionStorage.setItem('form_session_id', SESSION_ID);
+  showScreen('start');
+  updateProgress();
+  logStepView(0, '__start__', '시작화면');
+});
+
+initStart();
+</script>
+</body>
+</html>
